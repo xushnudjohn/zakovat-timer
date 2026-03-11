@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zakovat taymeri</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-color: #f0f4f8;
+            --shadow-light: #ffffff;
+            --shadow-dark: #d1d9e6;
+            --text-color: #2c3e50;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --accent-color: #10254E;
+            --danger-color: #e63946;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-border: rgba(255, 255, 255, 1);
+            --card-bg-solid: #ffffff;
+            --border-color: rgba(226, 232, 240, 0.5);
+            --kbd-bg: #ffffff;
+            --kbd-border: #d1d5db;
+            --kbd-text: #10254E;
+            --header-bg: rgba(255, 255, 255, 0.6);
+            --footer-bg: rgba(16, 37, 78, 0.05);
+            --footer-border: rgba(16, 37, 78, 0.1);
+            --hover-bg: rgba(241, 245, 249, 1);
+            --toggle-inactive-bg: #cbd5e1;
+            --tick-color: #cbd5e1;
+            --section-heading: #10254E;
+        }
+        
+        .dark-theme {
+            --bg-color: #0f1117;
+            --shadow-light: #1a1d28;
+            --shadow-dark: #080a0f;
+            --text-color: #e8eaf0;
+            --text-secondary: #a0a6b8;
+            --text-muted: #6b7280;
+            --accent-color: #5b8dee;
+            --card-bg: rgba(26, 29, 39, 0.85);
+            --card-border: rgba(42, 45, 58, 0.6);
+            --card-bg-solid: #1a1d27;
+            --border-color: rgba(42, 45, 58, 0.6);
+            --kbd-bg: #252838;
+            --kbd-border: #3a3f52;
+            --kbd-text: #8bb4f0;
+            --header-bg: rgba(26, 29, 39, 0.7);
+            --footer-bg: rgba(91, 141, 238, 0.08);
+            --footer-border: rgba(91, 141, 238, 0.15);
+            --hover-bg: rgba(30, 33, 45, 1);
+            --toggle-inactive-bg: #3a3f52;
+            --tick-color: #3a3f52;
+            --section-heading: #5b8dee;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        
+        .neumorphic-flat {
+            background: var(--bg-color);
+            box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
+        }
+        
+        .neumorphic-inset {
+            background: var(--bg-color);
+            box-shadow: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
+        }
+        
+        .neumorphic-convex {
+            background: var(--bg-color);
+            box-shadow: 15px 15px 30px var(--shadow-dark), -15px -15px 30px var(--shadow-light);
+        }
+        
+        .neumorphic-active:active, .active-mode {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            color: var(--accent-color);
+        }
+        
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.1s linear, stroke 0.5s ease;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .animate-slideLeft { animation: slideLeft 0.3s ease-out; }
+        
+        @keyframes slideLeft { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            background: #fff;
+            transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .toggle-active.toggle-switch { background: var(--accent-color); }
+        
+        .toggle-active.toggle-switch::after { left: 23px; }
+        
+        .toggle-inactive.toggle-switch { background: var(--toggle-inactive-bg); }
+        
+        .timer-tick {
+            stroke: var(--tick-color);
+            stroke-width: 2;
+        }
+        
+        .timer-tick-major {
+            stroke: var(--danger-color);
+            stroke-width: 4;
+        }
+        
+        .app-logo-icon {
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+    </style>
+
+  <script type="module" crossorigin src="/assets/index-BatTXonQ.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BlDgPeZT.css">
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>

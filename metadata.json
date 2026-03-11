@@ -1,0 +1,7 @@
+{
+  "name": "Zakovat Taymeri",
+  "description": "Zakovat va intellektual o‘yinlar uchun maxsus mo‘ljallangan professional taymer. Gemini AI yordamida savollar yaratish imkoniyati bilan. Muallif: Xushnudbek Xudayberdiyev.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
