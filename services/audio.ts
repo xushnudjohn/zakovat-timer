@@ -22,6 +22,7 @@ class AudioService {
   };
 
   private voiceBuffers: Record<string, AudioBuffer> = {};
+  private voiceVolumeMultiplier: number = 2.5; // Inson ovozini balandroq qilish uchun koeffitsient
 
   private init() {
     if (!this.ctx) {
@@ -106,13 +107,19 @@ class AudioService {
     const buffer = this.voiceBuffers[type];
     if (buffer && this.ctx) {
       const source = this.ctx.createBufferSource();
+      const gainNode = this.ctx.createGain();
+      
       source.buffer = buffer;
-      source.connect(this.ctx.destination);
+      gainNode.gain.setValueAtTime(this.voiceVolumeMultiplier, this.ctx.currentTime);
+      
+      source.connect(gainNode);
+      gainNode.connect(this.ctx.destination);
       source.start(0);
     } else {
       // Agar buffer yuklanishga ulgurmagan bo'lsa yoki xato bo'lsa (Fallback)
       const url = encodeURI(this.voiceFiles[type]);
       const audio = new Audio(url);
+      audio.volume = 1.0; // Fallback uchun maksimal balandlik
       audio.play().catch(e => console.error("Audio playback fallback failed for", url, e));
     }
   }
