@@ -5,6 +5,9 @@ import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import { TimerMode, AppSettings, VoiceType } from './types';
 import { MODE_CONFIGS } from './constants';
 import { audioService } from './services/audio';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SplashScreen } from '@capacitor/splash-screen';
 
 const App: React.FC = () => {
   const [mode, setMode] = useState<TimerMode>(TimerMode.NORMAL);
@@ -252,12 +255,25 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (settings.theme === 'dark' || (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    const isDark =
+      settings.theme === 'dark' ||
+      (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) {
       root.classList.add('dark-theme');
     } else {
       root.classList.remove('dark-theme');
     }
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: isDark ? '#0f1117' : '#f0f4f8' }).catch(() => {});
+    }
   }, [settings.theme]);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      SplashScreen.hide().catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     audioService.enabled = settings.soundEnabled;
