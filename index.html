@@ -149,6 +149,11 @@
             justify-content: center;
             overflow: hidden;
         }
+
+        /* Hide keyboard hotkey hints on native mobile (no physical keyboard) */
+        .is-native kbd {
+            display: none !important;
+        }
     </style>
 </head>
 <body>

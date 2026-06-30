@@ -272,6 +272,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       SplashScreen.hide().catch(() => {});
+      document.documentElement.classList.add('is-native');
     }
   }, []);
 
@@ -293,14 +294,16 @@ const App: React.FC = () => {
           <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: 'var(--accent-color)' }}>Zakovat taymeri</h1>
         </div>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsShortcutsOpen(true)}
-            className="w-10 h-10 rounded-xl neumorphic-flat neumorphic-active flex items-center justify-center transition-colors"
-            style={{ color: 'var(--text-muted)' }}
-            title="Klaviatura yorliqlari (K)"
-          >
-            <i className="fa-solid fa-keyboard"></i>
-          </button>
+          {!Capacitor.isNativePlatform() && (
+            <button
+              onClick={() => setIsShortcutsOpen(true)}
+              className="w-10 h-10 rounded-xl neumorphic-flat neumorphic-active flex items-center justify-center transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+              title="Klaviatura yorliqlari (K)"
+            >
+              <i className="fa-solid fa-keyboard"></i>
+            </button>
+          )}
           <button 
             onClick={() => setIsSettingsOpen(true)}
             className="w-10 h-10 rounded-xl neumorphic-flat neumorphic-active flex items-center justify-center tooltip-trigger relative"
