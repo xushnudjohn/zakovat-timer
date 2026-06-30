@@ -29,7 +29,16 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ settings, updateSetting
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-fadeIn" onClick={onClose}></div>
-      <div className="relative w-full max-w-sm h-full neumorphic-flat p-5 overflow-y-auto animate-slideLeft flex flex-col">
+      <div
+        className="relative w-full max-w-sm h-full neumorphic-flat overflow-y-auto animate-slideLeft flex flex-col"
+        style={{
+          paddingTop: 'calc(env(safe-area-inset-top) + 1.25rem)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.25rem)',
+          paddingLeft: '1.25rem',
+          paddingRight: '1.25rem',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         <div className="flex justify-between items-center mb-5">
           <h2 className="text-xl font-bold" style={{ color: 'var(--text-secondary)' }}>Sozlamalar</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-xl neumorphic-flat neumorphic-active flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>

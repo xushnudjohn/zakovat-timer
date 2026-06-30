@@ -6,19 +6,21 @@ class AudioService {
   public enabled: boolean = true;
   public voiceEnabled: boolean = false;
 
+  // Use relative paths so the WebView resolves them against the current
+  // document URL (capacitor://localhost on iOS, https://localhost on Android).
   private voiceFiles: Record<VoiceType, string> = {
-    '10s_left': "/10_soniya_qoldi.WAV",
-    'time_up': "/vaqt_boldi.WAV",
-    'count_1': '/1.WAV',
-    'count_2': '/2.WAV',
-    'count_3': '/3.WAV',
-    'count_4': '/4.WAV',
-    'count_5': '/5.WAV',
-    'count_6': '/6.WAV',
-    'count_7': '/7.WAV',
-    'count_8': '/8.WAV',
-    'count_9': '/9.WAV',
-    'count_10': '/10.WAV',
+    '10s_left': "10_soniya_qoldi.WAV",
+    'time_up': "vaqt_boldi.WAV",
+    'count_1': '1.WAV',
+    'count_2': '2.WAV',
+    'count_3': '3.WAV',
+    'count_4': '4.WAV',
+    'count_5': '5.WAV',
+    'count_6': '6.WAV',
+    'count_7': '7.WAV',
+    'count_8': '8.WAV',
+    'count_9': '9.WAV',
+    'count_10': '10.WAV',
   };
 
   private voiceBuffers: Record<string, AudioBuffer> = {};

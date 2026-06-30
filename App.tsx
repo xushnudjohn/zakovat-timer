@@ -5,6 +5,9 @@ import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import { TimerMode, AppSettings, VoiceType } from './types';
 import { MODE_CONFIGS } from './constants';
 import { audioService } from './services/audio';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SplashScreen } from '@capacitor/splash-screen';
 
 const App: React.FC = () => {
   const [mode, setMode] = useState<TimerMode>(TimerMode.NORMAL);
@@ -252,12 +255,26 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (settings.theme === 'dark' || (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    const isDark =
+      settings.theme === 'dark' ||
+      (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) {
       root.classList.add('dark-theme');
     } else {
       root.classList.remove('dark-theme');
     }
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: isDark ? '#0f1117' : '#f0f4f8' }).catch(() => {});
+    }
   }, [settings.theme]);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      SplashScreen.hide().catch(() => {});
+      document.documentElement.classList.add('is-native');
+    }
+  }, []);
 
   useEffect(() => {
     audioService.enabled = settings.soundEnabled;
@@ -277,14 +294,16 @@ const App: React.FC = () => {
           <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: 'var(--accent-color)' }}>Zakovat taymeri</h1>
         </div>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsShortcutsOpen(true)}
-            className="w-10 h-10 rounded-xl neumorphic-flat neumorphic-active flex items-center justify-center transition-colors"
-            style={{ color: 'var(--text-muted)' }}
-            title="Klaviatura yorliqlari (K)"
-          >
-            <i className="fa-solid fa-keyboard"></i>
-          </button>
+          {!Capacitor.isNativePlatform() && (
+            <button
+              onClick={() => setIsShortcutsOpen(true)}
+              className="w-10 h-10 rounded-xl neumorphic-flat neumorphic-active flex items-center justify-center transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+              title="Klaviatura yorliqlari (K)"
+            >
+              <i className="fa-solid fa-keyboard"></i>
+            </button>
+          )}
           <button 
             onClick={() => setIsSettingsOpen(true)}
             className="w-10 h-10 rounded-xl neumorphic-flat neumorphic-active flex items-center justify-center tooltip-trigger relative"

@@ -1,6 +1,6 @@
-/* Zakovat Timer - Base Styles */
-/* Most styles are defined in index.html <style> block */
-/* This file is for additional CSS overrides */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 * {
   margin: 0;
