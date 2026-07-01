@@ -44,5 +44,6 @@ export interface AppSettings {
   writingTime: boolean;
   soundEnabled: boolean;
   voiceEnabled: boolean;
+  hapticEnabled: boolean;
   theme: ThemeType;
 }
