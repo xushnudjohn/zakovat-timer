@@ -78,6 +78,7 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen,
               <ShortcutRow label="Yozuv vaqti (+10s)" keys={['J']} />
               <ShortcutRow label="Elektron signal (tovush)" keys={['X']} />
               <ShortcutRow label="Inson ovozi" keys={['I']} />
+              <ShortcutRow label="Vibratsiya" keys={['V']} />
             </div>
 
             <h3 className="text-[11px] font-black uppercase tracking-widest mt-8 mb-3 flex items-center gap-2" style={{ color: 'var(--section-heading)' }}>

@@ -9,8 +9,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Allow the timer to beep even when the iPhone silent switch is on.
+        // .playback with no .mixWithOthers so the app's own oscillator sounds
+        // route reliably to the speaker (mix mode can mute WebAudio synth).
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             print("Failed to configure AVAudioSession: \(error)")

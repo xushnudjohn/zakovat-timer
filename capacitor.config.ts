@@ -28,6 +28,11 @@ const config: CapacitorConfig = {
       backgroundColor: '#0f1117',
       overlaysWebView: false,
     },
+    LocalNotifications: {
+      // Keep scheduled notifications silent while the app is in the
+      // foreground — the in-app sounds and haptics handle that case.
+      presentationOptions: [],
+    },
   },
 };
 

@@ -5,7 +5,21 @@ import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import { TimerMode, AppSettings, VoiceType } from './types';
 import { MODE_CONFIGS } from './constants';
 import { audioService } from './services/audio';
+import {
+  keepScreenOn,
+  allowScreenOff,
+  hapticStart,
+  hapticWarning,
+  hapticEnd,
+  setHapticsEnabled,
+} from './services/mobile';
+import {
+  ensureNotificationPermission,
+  scheduleTimerNotifications,
+  cancelTimerNotifications,
+} from './services/notifications';
 import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
 
@@ -27,10 +41,20 @@ const App: React.FC = () => {
     writingTime: true,         // Javobni yozish vaqti - yoniq
     soundEnabled: true,        // Ovoz (Signal) - yoniq
     voiceEnabled: false,       // Inson ovozi - o'chiq (so'rovda ko'rsatilmagani uchun)
+    hapticEnabled: true,       // Vibratsiya - yoniq (faqat mobil ilovada ta'sir qiladi)
     theme: 'light'             // Ranglar mavzusi - Yorug'
   });
 
   const timerRef = useRef<any>(null);
+  const backgroundedAtRef = useRef<number | null>(null);
+  const isRunningRef = useRef(false);
+  const isWritingPhaseRef = useRef(false);
+  // Set when the segment end already happened while backgrounded (the
+  // local notification alerted the user) so we don't alert twice.
+  const skipEndAlertRef = useRef(false);
+
+  useEffect(() => { isRunningRef.current = isRunning; }, [isRunning]);
+  useEffect(() => { isWritingPhaseRef.current = isWritingPhase; }, [isWritingPhase]);
 
   const updateStatusLabel = useCallback((m: TimerMode, idx: number, isWriting = false) => {
     if (isWriting) {
@@ -64,20 +88,26 @@ const App: React.FC = () => {
 
     setIsRunning(false);
 
-    if (settings.voiceEnabled) {
-      if (isLastSegment) {
-        if (!isWritingPhase) {
-          audioService.playVoice('time_up'); // oxirgi savol (asosiy vaqt) tugaganida bir marta aytiladi xolos
+    const skipAlert = skipEndAlertRef.current;
+    skipEndAlertRef.current = false;
+
+    if (!skipAlert) {
+      if (settings.voiceEnabled) {
+        if (isLastSegment) {
+          if (!isWritingPhase) {
+            audioService.playVoice('time_up'); // oxirgi savol (asosiy vaqt) tugaganida bir marta aytiladi xolos
+          }
+        } else {
+          // oraliq savollar uchun har doim odatiy gong yangraydi
+          const originalState = audioService.enabled;
+          audioService.enabled = true;
+          audioService.playSound('end');
+          audioService.enabled = originalState;
         }
-      } else {
-        // oraliq savollar uchun har doim odatiy gong yangraydi
-        const originalState = audioService.enabled;
-        audioService.enabled = true;
+      } else if (settings.soundEnabled) {
         audioService.playSound('end');
-        audioService.enabled = originalState;
       }
-    } else if (settings.soundEnabled) {
-      audioService.playSound('end');
+      hapticEnd();
     }
 
     if (isLastSegment) {
@@ -106,10 +136,11 @@ const App: React.FC = () => {
   const toggleTimer = useCallback(() => {
     if (isRunning) {
       setIsRunning(false);
+      hapticStart();
     } else {
       const config = MODE_CONFIGS[mode];
       const isStartOfSegment = currentTime === config.segments[segmentIndex];
-      
+
       if (isStartOfSegment && !isWritingPhase && (settings.soundEnabled || settings.voiceEnabled)) {
         const originalState = audioService.enabled;
         audioService.enabled = true; // Inson ovozi yoniq bo'lganda oddiy audio state'i o'chiq bo'lgan bo'lishi mumkin, uni yoqib gongni chalamiz
@@ -117,6 +148,7 @@ const App: React.FC = () => {
         audioService.enabled = originalState;
       }
       setIsRunning(true);
+      hapticStart();
     }
   }, [isRunning, mode, currentTime, segmentIndex, isWritingPhase, settings.soundEnabled]);
 
@@ -171,11 +203,14 @@ const App: React.FC = () => {
           }));
           break;
         case 'i': // Inson ovozi
-          setSettings(prev => ({ 
-            ...prev, 
+          setSettings(prev => ({
+            ...prev,
             voiceEnabled: !prev.voiceEnabled,
             soundEnabled: !prev.voiceEnabled ? false : prev.soundEnabled
           }));
+          break;
+        case 'v': // Vibratsiya
+          setSettings(prev => ({ ...prev, hapticEnabled: !prev.hapticEnabled }));
           break;
         case 'o': // Oddiy rejim
           handleModeChange(TimerMode.NORMAL);
@@ -219,18 +254,18 @@ const App: React.FC = () => {
             } else if (settings.soundEnabled) {
               audioService.playSound('tick');
             }
+            hapticStart();
           }
 
-          // 10 soniya ogohlantirishi
+          // 10 soniya ogohlantirishi — audio birinchi, haptic keyin
+          // (aks holda iOS'da haptic audio session'ni bezovta qilishi mumkin)
           if (settings.signal10s && globalRemaining === 11 && !isWritingPhase) {
             if (settings.soundEnabled) {
-              // 2) Faqat signal yoniq bo'lsa
               audioService.playSound('warning');
             } else if (settings.voiceEnabled) {
-              // 3) Faqat Inson ovozi yoniq bo'lsa (signal o'chiq bo'ladi)
               audioService.playVoice('10s_left');
             }
-            // 1) Ikkalasi ham o'chiq bo'lsa hech narsa qilmaydi
+            hapticWarning();
           }
 
           // (Teskari sanoq mantiqini yuqoriga yozish vaqti blokiga o'zgartirdik, chunki u faqat yozish fazasida bo'lishi kerak. 
@@ -273,8 +308,68 @@ const App: React.FC = () => {
     if (Capacitor.isNativePlatform()) {
       SplashScreen.hide().catch(() => {});
       document.documentElement.classList.add('is-native');
+      ensureNotificationPermission();
     }
   }, []);
+
+  // Schedule local notifications when the timer starts so the 10s
+  // warning and the end signal still fire (sound + vibration) if the
+  // WebView is paused in the background. presentationOptions is empty
+  // in capacitor.config.ts, so these stay silent while the app is in
+  // the foreground and the in-app sounds handle it instead.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    if (isRunning) {
+      scheduleTimerNotifications({
+        secondsToEnd: currentTime,
+        useVoice: settings.voiceEnabled,
+        warn10s: settings.signal10s && !isWritingPhase,
+      });
+    } else {
+      cancelTimerNotifications();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning]);
+
+  // When the app is backgrounded WebView JS pauses, so the setInterval
+  // stops ticking. Catch up here: record the timestamp on background,
+  // and on resume decrement currentTime by the elapsed seconds so the
+  // timer stays wall-clock-accurate.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let pauseHandle: any;
+    let resumeHandle: any;
+    CapApp.addListener('pause', () => {
+      if (isRunningRef.current) backgroundedAtRef.current = Date.now();
+    }).then(h => { pauseHandle = h; });
+    CapApp.addListener('resume', () => {
+      const bg = backgroundedAtRef.current;
+      backgroundedAtRef.current = null;
+      if (bg == null || !isRunningRef.current) return;
+      const elapsed = Math.floor((Date.now() - bg) / 1000);
+      if (elapsed <= 0) return;
+      setCurrentTime((prev) => {
+        const next = Math.max(0, prev - elapsed);
+        // The end passed while backgrounded — the notification already
+        // alerted, so suppress the in-app end sound/vibration.
+        if (elapsed >= prev) skipEndAlertRef.current = true;
+        return next;
+      });
+    });
+    return () => {
+      pauseHandle?.remove();
+      resumeHandle?.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isRunning) {
+      keepScreenOn();
+    } else {
+      allowScreenOff();
+    }
+    return () => { allowScreenOff(); };
+  }, [isRunning]);
 
   useEffect(() => {
     audioService.enabled = settings.soundEnabled;
@@ -283,6 +378,10 @@ const App: React.FC = () => {
       audioService.loadVoices().catch(e => console.error("Could not preload voices", e));
     }
   }, [settings.soundEnabled, settings.voiceEnabled]);
+
+  useEffect(() => {
+    setHapticsEnabled(settings.hapticEnabled);
+  }, [settings.hapticEnabled]);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 md:p-8 transition-colors duration-300" style={{ backgroundColor: 'var(--bg-color)' }}>

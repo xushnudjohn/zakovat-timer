@@ -97,12 +97,19 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ settings, updateSetting
                 onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}
                 hotkey="X"
               />
-              <SettingRow 
-                label="Inson ovozi" 
+              <SettingRow
+                label="Inson ovozi"
                 description="Ovozli ogohlantirishlar va teskari sanash"
-                active={settings.voiceEnabled} 
+                active={settings.voiceEnabled}
                 onClick={() => updateSettings({ voiceEnabled: !settings.voiceEnabled })}
                 hotkey="I"
+              />
+              <SettingRow
+                label="Vibratsiya"
+                description="Muhim lahzalarda telefon vibratsiyalanadi"
+                active={settings.hapticEnabled}
+                onClick={() => updateSettings({ hapticEnabled: !settings.hapticEnabled })}
+                hotkey="V"
               />
             </div>
           </section>
