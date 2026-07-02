@@ -41,3 +41,6 @@ android/.idea/
 android/captures/
 android/app/src/main/assets/public/
 android/capacitor-cordova-android-plugins/
+
+# Finder duplicate artifacts
+**/config [0-9].xml
