@@ -44,3 +44,7 @@ android/capacitor-cordova-android-plugins/
 
 # Finder duplicate artifacts
 **/config [0-9].xml
+
+# Android release signing (NEVER commit)
+android/upload-keystore.jks
+android/keystore.properties
