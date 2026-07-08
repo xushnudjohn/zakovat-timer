@@ -3,12 +3,14 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 interface LiveActivityPlugin {
   startActivity(options: {
     title: string;
+    startEpochMs: number;
     endEpochMs: number;
     statusLabel: string;
     paused: boolean;
     remainingSeconds: number;
   }): Promise<{ started: boolean; id?: string; reason?: string }>;
   updateActivity(options: {
+    startEpochMs: number;
     endEpochMs: number;
     statusLabel: string;
     paused: boolean;
@@ -32,14 +34,17 @@ export const startLiveActivity = async (
   try {
     const res = await LiveActivity.startActivity({
       title,
+      startEpochMs: Date.now(),
       endEpochMs,
       statusLabel,
       paused: false,
       remainingSeconds: 0,
     });
     active = !!res?.started;
-  } catch {
+    console.log('[LiveActivity] start result:', JSON.stringify(res));
+  } catch (e) {
     active = false;
+    console.log('[LiveActivity] start error:', String(e));
   }
 };
 
@@ -51,7 +56,13 @@ export const updateLiveActivity = async (
 ) => {
   if (!isIOS() || !active) return;
   try {
-    await LiveActivity.updateActivity({ endEpochMs, statusLabel, paused, remainingSeconds });
+    await LiveActivity.updateActivity({
+      startEpochMs: Date.now(),
+      endEpochMs,
+      statusLabel,
+      paused,
+      remainingSeconds,
+    });
   } catch {}
 };
 

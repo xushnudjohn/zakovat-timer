@@ -38,23 +38,34 @@ struct ZakovatWidgetLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: ZakovatWidgetAttributes.self) { context in
             // Lock screen / banner
-            HStack(spacing: 14) {
-                Image(systemName: "stopwatch")
-                    .font(.system(size: 30, weight: .semibold))
-                    .foregroundStyle(accent)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(context.attributes.title)
-                        .font(.system(.headline, design: .rounded)).bold()
+            VStack(spacing: 12) {
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle().fill(accent.opacity(0.18)).frame(width: 46, height: 46)
+                        Image(systemName: "stopwatch")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(accent)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(context.attributes.title)
+                            .font(.system(.headline, design: .rounded)).bold()
+                            .foregroundStyle(.white)
+                        Text(context.state.statusLabel)
+                            .font(.system(.subheadline))
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    Spacer()
+                    Countdown(state: context.state,
+                              font: .system(size: 38, design: .rounded).monospacedDigit().bold())
                         .foregroundStyle(.white)
-                    Text(context.state.statusLabel)
-                        .font(.system(.subheadline))
-                        .foregroundStyle(.white.opacity(0.7))
+                        .frame(minWidth: 92, alignment: .trailing)
                 }
-                Spacer()
-                Countdown(state: context.state,
-                          font: .system(size: 34, design: .rounded).monospacedDigit().bold())
-                    .foregroundStyle(.white)
-                    .frame(minWidth: 92, alignment: .trailing)
+                if !context.state.paused {
+                    ProgressView(timerInterval: context.state.startDate...context.state.endDate,
+                                 countsDown: true) { EmptyView() } currentValueLabel: { EmptyView() }
+                        .tint(accent)
+                        .labelsHidden()
+                }
             }
             .padding(16)
             .activityBackgroundTint(navy)

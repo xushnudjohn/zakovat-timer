@@ -6,6 +6,8 @@ import Foundation
 // targets — ActivityKit matches the attributes type by name across the two.
 struct ZakovatWidgetAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
+        // Absolute moment the running segment started — used for the progress bar.
+        var startDate: Date
         // Absolute moment the running segment ends. Used with Text(timerInterval:)
         // so the countdown ticks on the Lock Screen / Dynamic Island without the
         // app running.

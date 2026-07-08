@@ -23,6 +23,8 @@
 		7349FEA92FFEE58E009BDB39 /* LiveActivityPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7349FEA52FFEE58E009BDB39 /* LiveActivityPlugin.swift */; };
 		AA10000000000000000000A1 /* vaqt_boldi.wav in Resources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000000B1 /* vaqt_boldi.wav */; };
 		AA10000000000000000000A2 /* s10_qoldi.wav in Resources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000000B2 /* s10_qoldi.wav */; };
+		AA10000000000000000000A3 /* beep_end.wav in Resources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000000B3 /* beep_end.wav */; };
+		AA10000000000000000000A4 /* beep_warn.wav in Resources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000000B4 /* beep_warn.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,6 +70,8 @@
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		AA10000000000000000000B1 /* vaqt_boldi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = vaqt_boldi.wav; sourceTree = "<group>"; };
 		AA10000000000000000000B2 /* s10_qoldi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = s10_qoldi.wav; sourceTree = "<group>"; };
+		AA10000000000000000000B3 /* beep_end.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = beep_end.wav; sourceTree = "<group>"; };
+		AA10000000000000000000B4 /* beep_warn.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = beep_warn.wav; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -141,6 +145,8 @@
 				50B271D01FEDC1A000F3C39B /* public */,
 				AA10000000000000000000B1 /* vaqt_boldi.wav */,
 				AA10000000000000000000B2 /* s10_qoldi.wav */,
+				AA10000000000000000000B3 /* beep_end.wav */,
+				AA10000000000000000000B4 /* beep_warn.wav */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -256,6 +262,8 @@
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				AA10000000000000000000A1 /* vaqt_boldi.wav in Resources */,
 				AA10000000000000000000A2 /* s10_qoldi.wav in Resources */,
+				AA10000000000000000000A3 /* beep_end.wav in Resources */,
+				AA10000000000000000000A4 /* beep_warn.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

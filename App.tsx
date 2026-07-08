@@ -59,8 +59,17 @@ const App: React.FC = () => {
   // local notification alerted the user) so we don't alert twice.
   const skipEndAlertRef = useRef(false);
 
+  const modeRef = useRef(mode);
+  const segmentIndexRef = useRef(0);
+  // Seconds of writing phase that auto-follow the current running main
+  // segment (10 if the last segment has writingTime; 0 otherwise). Lets the
+  // resume logic carry the countdown continuously into the writing phase.
+  const writingTailRef = useRef(0);
+
   useEffect(() => { isRunningRef.current = isRunning; }, [isRunning]);
   useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+  useEffect(() => { segmentIndexRef.current = segmentIndex; }, [segmentIndex]);
   useEffect(() => { isWritingPhaseRef.current = isWritingPhase; }, [isWritingPhase]);
 
   const updateStatusLabel = useCallback((m: TimerMode, idx: number, isWriting = false) => {
@@ -154,10 +163,13 @@ const App: React.FC = () => {
         audioService.playSound('gong');
         audioService.enabled = originalState;
       }
+      // Set a meaningful status label before running so the Live Activity
+      // never shows the idle "Tayyor".
+      updateStatusLabel(mode, segmentIndex, isWritingPhase);
       setIsRunning(true);
       hapticStart();
     }
-  }, [isRunning, mode, currentTime, segmentIndex, isWritingPhase, settings.soundEnabled]);
+  }, [isRunning, mode, currentTime, segmentIndex, isWritingPhase, settings.soundEnabled, settings.voiceEnabled, updateStatusLabel]);
 
   // Klaviatura tugmalari hodisalarini kuzatish
   useEffect(() => {
@@ -327,9 +339,14 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     if (isRunning) {
+      // Does a 10s writing phase auto-follow this segment? (last segment,
+      // writingTime on, and we're not already in the writing phase.)
+      const isLast = segmentIndex >= MODE_CONFIGS[mode].segments.length - 1;
+      writingTailRef.current = !isWritingPhase && settings.writingTime && isLast ? 10 : 0;
       scheduleTimerNotifications({
         secondsToEnd: currentTime,
         useVoice: settings.voiceEnabled,
+        useBeep: settings.soundEnabled && !settings.voiceEnabled,
         warn10s: settings.signal10s && !isWritingPhase,
       });
     } else {
@@ -377,13 +394,51 @@ const App: React.FC = () => {
       if (bg == null || !isRunningRef.current) return;
       const elapsed = Math.floor((Date.now() - bg) / 1000);
       if (elapsed <= 0) return;
-      setCurrentTime((prev) => {
-        const next = Math.max(0, prev - elapsed);
-        // The end passed while backgrounded — the notification already
-        // alerted, so suppress the in-app end sound/vibration.
-        if (elapsed >= prev) skipEndAlertRef.current = true;
-        return next;
-      });
+
+      const prev = currentTimeRef.current;
+
+      // Still inside the current segment — just catch the countdown up.
+      if (elapsed < prev) {
+        setCurrentTime(prev - elapsed);
+        return;
+      }
+
+      // The current segment ended while backgrounded. Its end alert already
+      // fired via the scheduled notification, so suppress the in-app one.
+      skipEndAlertRef.current = true;
+      const overflow = elapsed - prev; // time spent past the segment end
+      const tail = writingTailRef.current;
+      const m = modeRef.current;
+
+      const finishReset = () => {
+        writingTailRef.current = 0;
+        setIsWritingPhase(false);
+        setSegmentIndex(0);
+        setCurrentTime(MODE_CONFIGS[m].segments[0]);
+        updateStatusLabel(m, 0);
+        setIsRunning(false);
+      };
+
+      if (!isWritingPhaseRef.current && tail > 0) {
+        // Main segment ended; the writing phase should be running now.
+        writingTailRef.current = 0;
+        if (overflow < tail) {
+          setIsWritingPhase(true);
+          setCurrentTime(tail - overflow);
+          updateStatusLabel(m, segmentIndexRef.current, true);
+          // isRunning stays true → the interval keeps ticking the writing phase.
+        } else {
+          // Main + writing both elapsed while backgrounded.
+          finishReset();
+        }
+      } else if (isWritingPhaseRef.current) {
+        // Writing phase itself ended while backgrounded.
+        finishReset();
+      } else {
+        // A non-last segment (Duplet/Blitz) ended: let the interval run
+        // handleEndSegment, which advances and waits for a manual start.
+        setCurrentTime(0);
+      }
     });
     return () => {
       pauseHandle?.remove();

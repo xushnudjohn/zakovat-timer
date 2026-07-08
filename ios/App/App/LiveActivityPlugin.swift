@@ -3,7 +3,17 @@ import Capacitor
 import ActivityKit
 
 @objc(LiveActivityPlugin)
-public class LiveActivityPlugin: CAPPlugin {
+public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
+
+    // CAPBridgedPlugin: lets Capacitor 6+ auto-discover this plugin via the
+    // Objective-C runtime, no CAP_PLUGIN macro / .m file needed.
+    public let identifier = "LiveActivityPlugin"
+    public let jsName = "LiveActivity"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "startActivity", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "updateActivity", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "endActivity", returnType: CAPPluginReturnPromise),
+    ]
 
     // Held as Any? so the stored property doesn't require an availability
     // annotation; cast back to the concrete Activity type inside guards.
@@ -11,13 +21,16 @@ public class LiveActivityPlugin: CAPPlugin {
 
     @objc func startActivity(_ call: CAPPluginCall) {
         guard #available(iOS 16.2, *) else {
+            NSLog("[LiveActivity] unsupported iOS version")
             call.resolve(["started": false, "reason": "unsupported"])
             return
         }
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            NSLog("[LiveActivity] activities disabled in Settings")
             call.resolve(["started": false, "reason": "disabled"])
             return
         }
+        NSLog("[LiveActivity] starting activity…")
 
         let title = call.getString("title") ?? "Zakovat taymeri"
         let state = contentState(from: call)
@@ -32,8 +45,10 @@ public class LiveActivityPlugin: CAPPlugin {
                 content: .init(state: state, staleDate: nil)
             )
             self.activityRef = activity
+            NSLog("[LiveActivity] started id=\(activity.id)")
             call.resolve(["started": true, "id": activity.id])
         } catch {
+            NSLog("[LiveActivity] request failed: \(error.localizedDescription)")
             call.resolve(["started": false, "reason": error.localizedDescription])
         }
     }
@@ -60,13 +75,16 @@ public class LiveActivityPlugin: CAPPlugin {
 
     @available(iOS 16.2, *)
     private func contentState(from call: CAPPluginCall) -> ZakovatWidgetAttributes.ContentState {
-        // endEpochMs is the absolute wall-clock end time in milliseconds.
-        let endMs = call.getDouble("endEpochMs") ?? (Date().timeIntervalSince1970 * 1000)
+        // endEpochMs / startEpochMs are absolute wall-clock times in milliseconds.
+        let nowMs = Date().timeIntervalSince1970 * 1000
+        let endMs = call.getDouble("endEpochMs") ?? nowMs
+        let startMs = call.getDouble("startEpochMs") ?? nowMs
         let endDate = Date(timeIntervalSince1970: endMs / 1000.0)
+        let startDate = Date(timeIntervalSince1970: startMs / 1000.0)
         let label = call.getString("statusLabel") ?? ""
         let paused = call.getBool("paused") ?? false
         let remaining = call.getInt("remainingSeconds") ?? 0
-        return .init(endDate: endDate, statusLabel: label, paused: paused, remainingSeconds: remaining)
+        return .init(startDate: startDate, endDate: endDate, statusLabel: label, paused: paused, remainingSeconds: remaining)
     }
 
     private func endCurrentActivity() {

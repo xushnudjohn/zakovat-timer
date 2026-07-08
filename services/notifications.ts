@@ -31,6 +31,20 @@ const ensureChannels = async () => {
       vibration: true,
     });
     await LocalNotifications.createChannel({
+      id: 'timer_end_beep',
+      name: 'Taymer tugashi (signal)',
+      importance: 5,
+      sound: 'beep_end.wav',
+      vibration: true,
+    });
+    await LocalNotifications.createChannel({
+      id: 'timer_warn_beep',
+      name: '10 soniya ogohlantirishi (signal)',
+      importance: 5,
+      sound: 'beep_warn.wav',
+      vibration: true,
+    });
+    await LocalNotifications.createChannel({
       id: 'timer_default',
       name: 'Taymer signallari',
       importance: 5,
@@ -54,11 +68,25 @@ export const ensureNotificationPermission = async () => {
 export interface TimerNotificationOptions {
   /** Seconds until the current segment ends */
   secondsToEnd: number;
-  /** Play the recorded human voice instead of the default sound */
+  /** Play the recorded human voice */
   useVoice: boolean;
+  /** Play the electronic beep (when voice is off but signal is on) */
+  useBeep: boolean;
   /** Also schedule the 10-seconds-left warning */
   warn10s: boolean;
 }
+
+// Pick the sound file + Android channel for the end / warning notifications
+// based on the user's sound settings. Voice wins over beep; if neither is on
+// the notification is silent.
+const endSound = (o: TimerNotificationOptions) =>
+  o.useVoice ? 'vaqt_boldi.wav' : o.useBeep ? 'beep_end.wav' : undefined;
+const endChannel = (o: TimerNotificationOptions) =>
+  o.useVoice ? 'timer_end_voice' : o.useBeep ? 'timer_end_beep' : 'timer_default';
+const warnSound = (o: TimerNotificationOptions) =>
+  o.useVoice ? 's10_qoldi.wav' : o.useBeep ? 'beep_warn.wav' : undefined;
+const warnChannel = (o: TimerNotificationOptions) =>
+  o.useVoice ? 'timer_warn_voice' : o.useBeep ? 'timer_warn_beep' : 'timer_default';
 
 export const scheduleTimerNotifications = async (opts: TimerNotificationOptions) => {
   if (!isNative() || opts.secondsToEnd <= 0) return;
@@ -71,8 +99,8 @@ export const scheduleTimerNotifications = async (opts: TimerNotificationOptions)
         title: 'Zakovat taymeri',
         body: 'Vaqt tugadi!',
         schedule: { at: new Date(Date.now() + opts.secondsToEnd * 1000) },
-        sound: opts.useVoice ? 'vaqt_boldi.wav' : undefined,
-        channelId: opts.useVoice ? 'timer_end_voice' : 'timer_default',
+        sound: endSound(opts),
+        channelId: endChannel(opts),
       },
     ];
 
@@ -82,8 +110,8 @@ export const scheduleTimerNotifications = async (opts: TimerNotificationOptions)
         title: 'Zakovat taymeri',
         body: '10 soniya qoldi!',
         schedule: { at: new Date(Date.now() + (opts.secondsToEnd - 10) * 1000) },
-        sound: opts.useVoice ? 's10_qoldi.wav' : undefined,
-        channelId: opts.useVoice ? 'timer_warn_voice' : 'timer_default',
+        sound: warnSound(opts),
+        channelId: warnChannel(opts),
       });
     }
 

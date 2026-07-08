@@ -56,3 +56,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
 }
+
+// Capacitor discovers plugins from capacitor.config.json's packageClassList,
+// which only lists npm plugin packages. Our LiveActivityPlugin is a local
+// app plugin, so we register it manually here via the capacitorDidLoad hook.
+class MainViewController: CAPBridgeViewController {
+    override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(LiveActivityPlugin())
+    }
+}
