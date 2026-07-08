@@ -18,6 +18,11 @@ import {
   scheduleTimerNotifications,
   cancelTimerNotifications,
 } from './services/notifications';
+import {
+  startLiveActivity,
+  updateLiveActivity,
+  endLiveActivity,
+} from './services/liveActivity';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -49,11 +54,13 @@ const App: React.FC = () => {
   const backgroundedAtRef = useRef<number | null>(null);
   const isRunningRef = useRef(false);
   const isWritingPhaseRef = useRef(false);
+  const currentTimeRef = useRef(0);
   // Set when the segment end already happened while backgrounded (the
   // local notification alerted the user) so we don't alert twice.
   const skipEndAlertRef = useRef(false);
 
   useEffect(() => { isRunningRef.current = isRunning; }, [isRunning]);
+  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
   useEffect(() => { isWritingPhaseRef.current = isWritingPhase; }, [isWritingPhase]);
 
   const updateStatusLabel = useCallback((m: TimerMode, idx: number, isWriting = false) => {
@@ -330,6 +337,28 @@ const App: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning]);
+
+  // Live Activity (iOS 16.1+): show the running countdown on the Lock Screen
+  // and Dynamic Island. Start/end follows isRunning; endEpochMs lets the OS
+  // tick the countdown itself without the app running.
+  useEffect(() => {
+    if (isRunning) {
+      const endMs = Date.now() + currentTime * 1000;
+      startLiveActivity('Zakovat taymeri', endMs, statusText);
+    } else {
+      endLiveActivity();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning]);
+
+  // Re-sync the Live Activity when the segment or phase changes mid-run
+  // (new endDate + status), so the countdown reflects the new segment.
+  useEffect(() => {
+    if (!isRunningRef.current) return;
+    const endMs = Date.now() + currentTimeRef.current * 1000;
+    updateLiveActivity(endMs, statusText, false, currentTimeRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusText, segmentIndex, isWritingPhase]);
 
   // When the app is backgrounded WebView JS pauses, so the setInterval
   // stops ticking. Catch up here: record the timestamp on background,
